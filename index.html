@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario de Protocolo Sísmico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f8f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .question-card {
+            background-color: #f0f9ff; /* light blue for question cards */
+            border-left: 5px solid #3b82f6; /* blue accent */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .question-card h3 {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1f2937; /* dark gray text */
+        }
+        .option-label {
+            display: block;
+            margin-bottom: 10px;
+            padding: 12px;
+            background-color: #e0f2fe; /* lighter blue for options */
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .option-label:hover {
+            background-color: #bfdbfe; /* even lighter blue on hover */
+        }
+        .option-label input[type="radio"],
+        .option-label input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .submit-button {
+            background-color: #22c55e; /* green */
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+        }
+        .submit-button:hover {
+            background-color: #16a34a; /* darker green on hover */
+        }
+        .score-card {
+            background-color: #d1fae5; /* light green for results */
+            border: 2px solid #10b981; /* green border */
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #065f46; /* dark green text */
+            margin-top: 20px;
+        }
+        .feedback-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .feedback-correct {
+            background-color: #d1fae5; /* light green */
+            color: #065f46; /* dark green */
+        }
+        .feedback-incorrect {
+            background-color: #fee2e2; /* light red */
+            color: #dc2626; /* dark red */
+        }
+        .correct-answer-display {
+            font-size: 0.9em;
+            color: #10b981; /* green for correct answer */
+            margin-top: 5px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            margin-top: 5px;
+            min-height: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Cuestionario: Protocolo Sísmico</h1>
+
+        <div id="quiz-container">
+            <!-- Questions will be loaded here by JavaScript -->
+        </div>
+
+        <button id="submit-quiz" class="submit-button mt-6">Enviar respuestas</button>
+
+        <div id="results" class="score-card hidden">
+            <p>Tu puntuación: <span id="score"></span> / <span id="total-questions"></span></p>
+            <p id="overall-feedback" class="mt-2"></p>
+        </div>
+    </div>
+
+    <script>
+        const quizContainer = document.getElementById('quiz-container');
+        const submitButton = document.getElementById('submit-quiz');
+        const resultsDiv = document.getElementById('results');
+        const scoreSpan = document.getElementById('score');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const overallFeedback = document.getElementById('overall-feedback');
+
+        // Define the quiz questions and correct answers based on the PDF content
+        const quizQuestions = [
+            {
+                question: "¿Cuál es el objetivo fundamental del Protocolo Sísmico para establecimientos educativos?",
+                type: "radio",
+                options: [
+                    "Minimizar los costos de reparación de edificios.",
+                    "Generar conciencia, promover buenas prácticas y fortalecer capacidades para afrontar una emergencia sísmica.",
+                    "Clasificar los tipos de sismos en la provincia.",
+                    "Establecer horarios de simulacros obligatorios."
+                ],
+                answer: "Generar conciencia, promover buenas prácticas y fortalecer capacidades para afrontar una emergencia sísmica."
+            },
+            {
+                question: "Según el protocolo, ¿cuáles son las 3 acciones principales a realizar 'Si es posible' durante un sismo?",
+                type: "checkbox",
+                options: [
+                    "Correr hacia la salida más cercana.",
+                    "Agáchese.",
+                    "Cúbrase.",
+                    "Grabar el evento con un teléfono.",
+                    "Agárrese."
+                ],
+                answer: ["Agáchese.", "Cúbrase.", "Agárrese."]
+            },
+            {
+                question: "Menciona una de las etapas fundamentales en la elaboración de un Plan de Prevención Sísmica (PPS).",
+                type: "text",
+                answer: "Capacitación del Personal" // Simplified answer for text input, can also accept "Evaluación del Establecimiento", "Elaboración del Plan de Prevención Sísmica (PPS)", "Simulacros".
+            },
+            {
+                question: "En caso de un sismo de gran magnitud, ¿qué suministros se deben cortar según el plan de contingencia?",
+                type: "checkbox",
+                options: [
+                    "Suministro de agua.",
+                    "Suministro de energía.",
+                    "Suministro de gas.",
+                    "Suministro de internet."
+                ],
+                answer: ["Suministro de energía.", "Suministro de gas."]
+            },
+            {
+                question: "Durante un terremoto, si te encuentras en un lugar cerrado y la construcción es sismorresistente, ¿cuál es la premisa básica?",
+                type: "radio",
+                options: [
+                    "Abandonar el lugar de inmediato.",
+                    "Correr a buscar un mueble pesado.",
+                    "No abandonar el lugar.",
+                    "Usar el ascensor para evacuar."
+                ],
+                answer: "No abandonar el lugar."
+            },
+            {
+                question: "Después de un terremoto, ¿cuáles son las primeras acciones a tomar si te encuentras dentro de un edificio?",
+                type: "checkbox",
+                options: [
+                    "Encender fósforos para iluminar.",
+                    "Mantener la calma y esperar que los objetos cesen de moverse.",
+                    "Cerrar las llaves maestras de gas, electricidad y agua.",
+                    "Propagar rumores infundados.",
+                    "Comprobar si hay heridos entre las personas cercanas y practicar primeros auxilios si es posible."
+                ],
+                answer: ["Mantener la calma y esperar que los objetos cesen de moverse.", "Cerrar las llaves maestras de gas, electricidad y agua.", "Comprobar si hay heridos entre las personas cercanas y practicar primeros auxilios si es posible."]
+            },
+            {
+                question: "¿Qué es una 'Zona de Seguridad' según el Glosario del protocolo?",
+                type: "text",
+                answer: "Espacio previamente establecido al que deben dirigirse las personas durante una evacuación, alejado de elementos estructurales peligrosos."
+            },
+            {
+                question: "¿Cuál es el propósito de los 'Simulacros'?",
+                type: "radio",
+                options: [
+                    "Demostrar la capacidad del personal para correr rápido.",
+                    "Evaluar la resistencia del edificio.",
+                    "Reproducir situaciones de emergencia para entrenar y evaluar la respuesta de las personas.",
+                    "Realizar una limpieza profunda del establecimiento."
+                ],
+                answer: "Reproducir situaciones de emergencia para entrenar y evaluar la respuesta de las personas."
+            }
+        ];
+
+        // Function to render the quiz questions
+        function renderQuiz() {
+            quizQuestions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <h3 class="text-xl">Pregunta ${index + 1}: ${q.question}</h3>
+                    <div class="options-container" id="options-${index}"></div>
+                    <div class="feedback-message hidden" id="feedback-${index}"></div>
+                    ${q.type !== 'text' ? `<div class="correct-answer-display hidden" id="correct-answer-${index}"></div>` : ''}
+                `;
+                quizContainer.appendChild(questionCard);
+
+                const optionsContainer = document.getElementById(`options-${index}`);
+                if (q.type === "radio") {
+                    q.options.forEach((option, i) => {
+                        optionsContainer.innerHTML += `
+                            <label class="option-label">
+                                <input type="radio" name="question-${index}" value="${option}">
+                                ${option}
+                            </label>
+                        `;
+                    });
+                } else if (q.type === "checkbox") {
+                    q.options.forEach((option, i) => {
+                        optionsContainer.innerHTML += `
+                            <label class="option-label">
+                                <input type="checkbox" name="question-${index}" value="${option}">
+                                ${option}
+                            </label>
+                        `;
+                    });
+                } else if (q.type === "text") {
+                    optionsContainer.innerHTML += `
+                        <textarea name="question-${index}" rows="3" placeholder="Escribe tu respuesta aquí..."></textarea>
+                    `;
+                }
+            });
+            totalQuestionsSpan.textContent = quizQuestions.length;
+        }
+
+        // Function to check answers and display results
+        submitButton.addEventListener('click', () => {
+            let score = 0;
+
+            quizQuestions.forEach((q, index) => {
+                const feedbackDiv = document.getElementById(`feedback-${index}`);
+                const correctAnswerDisplay = document.getElementById(`correct-answer-${index}`);
+                feedbackDiv.classList.add('hidden'); // Hide previous feedback
+                feedbackDiv.classList.remove('feedback-correct', 'feedback-incorrect'); // Reset styles
+                if (correctAnswerDisplay) {
+                    correctAnswerDisplay.classList.add('hidden'); // Hide previous correct answer
+                }
+
+                let isCorrect = false;
+
+                if (q.type === "radio") {
+                    const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                    if (selectedOption && selectedOption.value === q.answer) {
+                        score++;
+                        isCorrect = true;
+                    } else if (selectedOption) {
+                        isCorrect = false;
+                    }
+                    if (correctAnswerDisplay) {
+                        correctAnswerDisplay.textContent = `Respuesta correcta: ${q.answer}`;
+                        correctAnswerDisplay.classList.remove('hidden');
+                    }
+                } else if (q.type === "checkbox") {
+                    const selectedOptions = Array.from(document.querySelectorAll(`input[name="question-${index}"]:checked`)).map(input => input.value);
+                    if (selectedOptions.length === q.answer.length && q.answer.every(ans => selectedOptions.includes(ans))) {
+                        score++;
+                        isCorrect = true;
+                    } else {
+                        isCorrect = false;
+                    }
+                    if (correctAnswerDisplay) {
+                        correctAnswerDisplay.textContent = `Respuestas correctas: ${q.answer.join(", ")}`;
+                        correctAnswerDisplay.classList.remove('hidden');
+                    }
+                } else if (q.type === "text") {
+                    const userAnswer = document.querySelector(`textarea[name="question-${index}"]`).value.trim();
+                    // Simple check for text answers, can be improved with more robust matching
+                    if (userAnswer.toLowerCase().includes(q.answer.toLowerCase().slice(0, 10))) { // Check for a partial match
+                        score++;
+                        isCorrect = true;
+                    } else {
+                        isCorrect = false;
+                    }
+                    feedbackDiv.textContent = `Respuesta correcta: ${q.answer}`;
+                    feedbackDiv.classList.remove('hidden');
+                }
+
+                feedbackDiv.textContent = isCorrect ? "¡Correcto!" : "Incorrecto.";
+                feedbackDiv.classList.add(isCorrect ? 'feedback-correct' : 'feedback-incorrect', 'block');
+                feedbackDiv.classList.remove('hidden');
+            });
+
+            scoreSpan.textContent = score;
+            resultsDiv.classList.remove('hidden');
+
+            if (score === quizQuestions.length) {
+                overallFeedback.textContent = "¡Excelente! Has respondido todas las preguntas correctamente.";
+                overallFeedback.className = "mt-2 text-green-700 font-bold";
+            } else if (score > quizQuestions.length / 2) {
+                overallFeedback.textContent = "¡Bien hecho! Tienes un buen entendimiento del protocolo.";
+                overallFeedback.className = "mt-2 text-yellow-700 font-bold";
+            } else {
+                overallFeedback.textContent = "Necesitas repasar más el protocolo. ¡Sigue practicando!";
+                overallFeedback.className = "mt-2 text-red-700 font-bold";
+            }
+        });
+
+        // Initialize the quiz when the page loads
+        document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+</body>
+</html>
